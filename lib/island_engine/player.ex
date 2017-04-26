@@ -1,6 +1,6 @@
 defmodule IslandEngine.Player do
   defstruct name: :none, board: :none, island_set: :none
-  alias IslandEngine.{Board, Coordinate, IslandSet, Player}
+  alias IslandEngine.{Board, IslandSet, Island, Coordinate, Player}
 
   def start_link(name \\ :none) do
     {:ok, board} = Board.start_link()
@@ -11,7 +11,7 @@ defmodule IslandEngine.Player do
 
   def set_name(player, name) do
     Agent.update(player,
-      fn state -> Map.put(state, :name, name) end
+    fn state -> Map.put(state, :name, name) end
     )
   end
 
@@ -21,6 +21,38 @@ defmodule IslandEngine.Player do
 
   def to_s(player) do
     "%Player{" <> string_body(player) <> "}"
+  end
+
+  def get_board(player) do
+    Agent.get(player, fn state -> state.board end)
+  end
+
+  def get_island_set(player) do
+    Agent.get(player, fn state -> state.island_set end)
+  end
+
+  def set_island_coordinates(player, island_key, coordinates) do
+    board = Player.get_board(player)
+    island_set = Player.get_island_set(player)
+    new_coordinates = convert_coordinates(board, coordinates)
+    IslandSet.set_island_coordinates(island_set, island_key, new_coordinates)
+  end
+
+  def get_island(player, island_key) do
+    island_set = Player.get_island_set(player)
+    IslandSet.get_island(island_set, island_key)
+  end
+
+  def convert_coordinates(board, coordinates) do
+    Enum.map(coordinates, fn coord -> convert_coordinate(board, coord) end)
+  end
+
+  def convert_coordinate(board, coordinate) when is_atom coordinate do
+    Board.get_coordinate(board, coordinate)
+  end
+
+  def convert_coordinate(_board, coordinate) when is_pid coordinate do
+    coordinate
   end
 
   def string_body(player) do

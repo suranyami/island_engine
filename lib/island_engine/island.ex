@@ -9,11 +9,24 @@ defmodule IslandEngine.Island do
     Agent.update(island, fn _state -> new_coordinates end)
   end
 
+  def get_coordinates(island) do
+    Agent.get(island, fn state -> state end)
+  end
+
+  def forested?(island) do
+    island
+    |> Agent.get(fn state -> state end)
+    |> Enum.all?(fn coord -> Coordinate.hit?(coord) end)
+  end
+
   def to_s(island) do
-    island_string =
-      island
-      |> Agent.get(fn state -> state end)
-      |> Enum.reduce("", fn coord, acc -> "#{acc}, #{Coordinate.to_s(coord)}" end)
-    "[" <> String.replace_leading(island_string, ", ", "") <> "]"
+    "[" <> coordinate_strings(island) <> "]"
+  end
+
+  defp coordinate_strings(island) do
+    island
+    |> Agent.get(fn state -> state end)
+    |> Enum.map(fn coord -> Coordinate.to_s(coord) end)
+    |> Enum.join(", ")
   end
 end
